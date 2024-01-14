@@ -1,18 +1,35 @@
-from flask import jsonify, send_from_directory, request
-from flask_cors import CORS
-from pathlib import Path
-from deltalake import DeltaTable
-import json
-from app import app
 import sys
+import json
+from pathlib import Path
+
+from deltalake import DeltaTable
+from flask import jsonify, send_from_directory, request, render_template
+from flask_cors import CORS
+from flask_graphql import GraphQLView
+import graphene
+
+from app import app
+from app.models import Patate
+from app.schema_graphql import schema
 
 
-CORS(app) # , resources={r"/api/*": {"origins": "http://localhost:8080"}})  # Update with your frontend URL
-
+CORS(app)
 # if len(sys.argv) >= 1 and sys.argv[1] == "prod":
-base_path = Path("/Users/i501383/Documents/potato_gallery/store")
+base_path = Path("/Users/i501383/Documents/the-potato-app/store")
 # else:
-# base_path = Path("/Users/i501383/Documents/potato_gallery/store_test")
+# base_path = Path("/Users/i501383/Documents/the-potato-app/store_test")
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/api/news/', methods=["GET"])
+def get_news():
+    news_data = [
+        {"title": "News 1", "content": "Lorem ipsum dolor sit amet."},
+        {"title": "News 2", "content": "Consectetur adipiscing elit."}]
+    return jsonify(news_data)
 
 
 @app.route("/api/images/data/", methods=["GET"])
@@ -57,3 +74,8 @@ def get_pokemon_data():
 @app.route('/api/pokemon-images/<filename>')
 def get_pokemon_image(filename):
     return send_from_directory(base_path / "pokemon_images", filename)
+
+
+@app.route('/graphql', methods=['GET', 'POST'])
+def graphql():
+    return GraphQLView.as_view('graphql', schema=schema, graphiql=True)()

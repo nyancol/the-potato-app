@@ -9,6 +9,15 @@ flask-cors = "*"
 deltalake = "*"
 pandas = "*"
 requests = "*"
+pyarrow = "*"
+psycopg2-binary = "*"
+flask-sqlalchemy = "*"
+flask-migrate = "*"
+flask-script = "*"
+pyyaml = "*"
+graphene-sqlalchemy = "*"
+flask-graphql = "*"
+graphene = "*"
 
 [dev-packages]
 

@@ -1,23 +1,21 @@
+import os
+from yaml import load, CLoader as Loader
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from logging.config import dictConfig
+from pathlib import Path
 
+basepath = Path(__file__).parent.parent
 
-dictConfig({
-    'version': 1,
-    'formatters': {'default': {
-        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
-    }},
-    'handlers': {'wsgi': {
-        'class': 'logging.StreamHandler',
-        'stream': 'ext://flask.logging.wsgi_errors_stream',
-        'formatter': 'default'
-    }},
-    'root': {
-        'level': 'INFO',
-        'handlers': ['wsgi']
-    }
-})
+with open(basepath / "config.yml") as f:
+    data = {k: v for v in load(f, Loader=Loader)["postgres"] for k, v in v.items()}
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = data['SQLALCHEMY_DATABASE_URI']
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
 
 from app import routes
