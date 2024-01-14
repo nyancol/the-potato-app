@@ -9,9 +9,12 @@ card_schema = pa.schema([
             ("last_name", pa.string()),
             ("gender", pa.string()),
             ("birth_date", pa.date32()),
+            ("birth_country", pa.string()),
+            ("birth_city", pa.string()),
             ("nationalities", pa.list_(pa.string())),
+            ("email", pa.string()),
         ])
-    
+
 def main():
     df = pd.read_csv("../rawdata/potatoes_identity_card.csv", sep=";")
     df["birth_date"] = pd.to_datetime(df["birth_date"], dayfirst=True)
