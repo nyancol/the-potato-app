@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <h2 class="text-h2">Image Gallery</h2>
+    <h2 class="text-h2">Annuaire</h2>
 
     <!-- Year Selection -->
     <v-row justify="center" class="mb-4">

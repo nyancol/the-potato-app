@@ -1,7 +1,7 @@
 <!-- src/components/PokemonGallery.vue -->
 <template>
     <v-container>
-      <h2 class="text-h2">Pokemon Image Gallery</h2>
+      <h2 class="text-h2">Pokedex</h2>
   
       <!-- Year Selection -->
       <v-row justify="center" class="mb-4">

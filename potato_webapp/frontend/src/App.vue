@@ -1,52 +1,26 @@
-<!--
 <template>
   <v-app>
+    <v-app-bar app>
+      <v-toolbar-title>Republique des Patates</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn to="/">Home</v-btn>
+      <v-btn to="/annuaire">Annuaire</v-btn>
+      <v-btn to="/pokedex">Pokedex</v-btn>
+      <v-btn to="/naturalisation">Demander la naturalisation</v-btn>
+      <v-btn to="/horoscope">Horoscope</v-btn>
+      <v-btn to="/coup">Demander un coup d'état</v-btn>
+    </v-app-bar>
+
     <v-main>
-      <ImageGallery/>
+      <v-container>
+        <router-view></router-view>
+      </v-container>
     </v-main>
   </v-app>
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld.vue'
-import ImageGallery from './components/ImageGallery.vue';
-
 export default {
-  name: 'App',
-
-  components: {
-    // HelloWorld,
-    ImageGallery
-},
-
-  data: () => ({
-    //
-  }),
-}
-</script>
--->
-<template>
-  <div id="app">
-    <LandingPage />
-  </div>
-</template>
-
-<script>
-import LandingPage from '@/components/LandingPage.vue';
-
-export default {
-  name: 'App',
-  components: {
-    LandingPage,
-  },
+  name: "App",
 };
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
