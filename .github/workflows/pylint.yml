@@ -16,8 +16,11 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        cd potato_analyzer
         python -m pip install --upgrade pip
+        pip install -r requirements.txt
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py')
+        cd potato_analyzer
+        pylint $(git ls-files '*.py') potato_analyzer
