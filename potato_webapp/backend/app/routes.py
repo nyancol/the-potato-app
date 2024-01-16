@@ -1,6 +1,8 @@
 import sys
 import json
 from pathlib import Path
+import urllib.parse
+import logging
 
 from deltalake import DeltaTable
 from flask import jsonify, send_from_directory, request, render_template
@@ -12,6 +14,8 @@ from app import app
 from app.models import Patate
 from app.schema_graphql import schema
 
+
+logging.basicConfig(filename='app.log', level=logging.INFO)
 
 CORS(app)
 # if len(sys.argv) >= 1 and sys.argv[1] == "prod":
@@ -43,13 +47,16 @@ def get_image_data():
                                                                "spirit_animal_description", "image_path", "year_range"])
     df = df[df.year_range.apply(lambda yr: len(yr) == 1 and yr[0] == year_param)]
     df["filename"] = df["image_path"].apply(lambda p: p.split('/')[-1])
-    totem_records = json.loads(df.to_json(orient="records"))    
+    totem_records = json.loads(df.to_json(orient="records"))
     return jsonify(totem_records)
 
 
 @app.route('/api/images/<filename>')
 def get_image(filename):
-    return send_from_directory(base_path / "totem_images", filename)
+    base_path = Path("/Users/i501383/Documents/the-potato-app/store/totem_images/")
+    # filename = urllib.parse.unquote(filename)
+    # app.logger.info("Image path: ", base_path / filename)
+    return send_from_directory(base_path, filename)
 
 
 @app.route("/api/images/pokemon-data/", methods=["GET"])
@@ -67,7 +74,7 @@ def get_pokemon_data():
                                        row["L2_image_path"].split('/')[-1],
                                        row["L3_image_path"].split('/')[-1],
                                        ], axis=1)
-    pokemon_records = json.loads(df.to_json(orient="records")) 
+    pokemon_records = json.loads(df.to_json(orient="records"))
     return jsonify(pokemon_records)
 
 

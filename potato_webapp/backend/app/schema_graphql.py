@@ -1,11 +1,27 @@
-from graphene import Schema, ObjectType, List, Field, Int
+from graphene import Schema, ObjectType, List, Field, Int, String
 from graphene_sqlalchemy import SQLAlchemyObjectType
-from app.models import Patate
+from app.models import Patate, PatateLocation, SpiritAnimal, Pokemon
 
 
 class PatateType(SQLAlchemyObjectType):
     class Meta:
         model = Patate
+
+
+class PatateLocationType(SQLAlchemyObjectType):
+    class Meta:
+        model = PatateLocation
+
+
+class PokemonType(SQLAlchemyObjectType):
+    class Meta:
+        model = Pokemon
+
+
+class SpiritAnimalType(SQLAlchemyObjectType):
+    class Meta:
+        model = SpiritAnimal
+
 
 class Query(ObjectType):
     patates = List(PatateType)
