@@ -15,6 +15,7 @@ scikit-learn = "*"
 openai = "*"
 stability-sdk = "*"
 requests = "*"
+diagrams = "*"
 
 [dev-packages]
 ipykernel = "*"

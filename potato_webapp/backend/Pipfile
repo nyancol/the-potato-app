@@ -18,6 +18,7 @@ pyyaml = "*"
 graphene-sqlalchemy = "*"
 flask-graphql = "*"
 graphene = "*"
+eralchemy2 = "*"
 
 [dev-packages]
 
