@@ -1,8 +1,15 @@
 import pandas as pd
+from pathlib import Path
 import pyarrow as pa
 from deltalake import write_deltalake, DeltaTable
 import subprocess as sp
 import json
+
+messenger_schema = pa.schema([
+            ("id", pa.string()),
+            ("messenger_id", pa.string()),
+            ("version", pa.int32()),
+])
 
 messages_bronze_schema = pa.schema([
             ("sender_name", pa.string()),
@@ -16,7 +23,8 @@ messages_bronze_schema = pa.schema([
             ("share", pa.struct([("link", pa.string())])),
             ("audio_files", pa.list_(pa.struct([("uri", pa.string()), ("creation_timestamp", pa.timestamp("us"))]))),
             ("sticker", pa.struct([("uri", pa.string()), ("ai_stickers", pa.list_(pa.string()))])),
-            ("call_duration", pa.int32())
+            ("call_duration", pa.int32()),
+            ("messenger_id", pa.string())
         ])
 
 messages_silver_schema = pa.schema([
@@ -34,9 +42,16 @@ messages_silver_schema = pa.schema([
             ("audio_files", pa.list_(pa.struct([("uri", pa.string()), ("creation_timestamp", pa.timestamp("us"))]))),
             ("sticker", pa.struct([("uri", pa.string()), ("ai_stickers", pa.list_(pa.string()))])),
             ("call_duration", pa.int32()),
+            ("conversation_id", pa.string()),
             ("year", pa.int32()),
             ("month", pa.int32()),
         ])
+
+
+def create_messenger_convs():
+    df = pd.read_csv("../rawdata/messenger_conversations.csv", sep=";")
+    write_deltalake("../store/messenger_conversations", df, schema=messenger_schema,
+                    mode="overwrite")
 
 
 def parse_message_file(content):
@@ -67,7 +82,11 @@ def parse_message_file(content):
     return messages
 
 def create_silver_messages_table():
-    df = DeltaTable("./store/rw_messages", ).to_pandas()
+    df_messenger_ids = DeltaTable("../store/messenger_conversations").to_pandas(columns=["messenger_id", "id"])
+    df = DeltaTable("../store/rw_messages", ).to_pandas()
+    df = df.set_index("messenger_id").join(df_messenger_ids.set_index("messenger_id"))
+    df = df.rename(columns={'id': 'conversation_id'})
+
     df["year"] = df["timestamp_ms"].dt.year
     df["month"] = df["timestamp_ms"].dt.month
 
@@ -76,35 +95,70 @@ def create_silver_messages_table():
 
     df["reactions"] = df["reactions"].apply(lambda r: list() if r is  None else r)
     df["photos"] = df["photos"].apply(lambda r: list() if r is None else r)
-    
-    write_deltalake("./store/messages", df, schema=messages_silver_schema, mode='overwrite',
-                    partition_by=["year", "type"], overwrite_schema=True)
+
+    write_deltalake("../store/messages", df, schema=messages_silver_schema, mode='overwrite',
+                    partition_by=["conversation_id", "year", "type"], overwrite_schema=True)
+    print(len(df))
 
 
-def create_bronze_messages_table():
+def create_bronze_messages_table(messenger_id):
+    rawdata_path = Path("../rawdata/your_activity_across_facebook/messages/inbox/" + messenger_id)
     messages = []
-    rawdata_path = "./rawdata/your_activity_across_facebook/messages/inbox/lespatatesvirerargentmag16940_2365204306876958"
 
-    for i in range(1, 9):
-        res = sp.run(f"cat {rawdata_path}/message_{i}.json | jq . | iconv -f utf8 -t latin1 > {rawdata_path}/message_{i}_decoded.json", shell=True)
-        with open(f"{rawdata_path}/message_{i}_decoded.json", mode="r", encoding="utf-8") as f:
+    for path in rawdata_path.rglob('*.json'):
+        print(path)
+        res = sp.run(f"cat {path} | jq . | iconv -f utf8 -t latin1 > {path}_decoded.json", shell=True)
+        decoded_file = Path(f"{path}_decoded.json")
+        with open(decoded_file, mode="r", encoding="utf-8") as f:
             messages.extend(parse_message_file(json.load(f)))
+        decoded_file.unlink()
+
+
     df = pd.DataFrame(messages)
+    df["messenger_id"] = messenger_id
     df["timestamp_ms"] = df["timestamp_ms"] * 1000
 
-    photos_fix = df["photos"].dropna().apply(lambda phts: [{"uri": p["uri"], "creation_timestamp": p["creation_timestamp"] * 1000} for p in phts])
-    df["photos"] = photos_fix
-    
-    videos_fix = df["videos"].dropna().apply(lambda vds: [{"uri": v["uri"], "creation_timestamp": v["creation_timestamp"] * 1000} for v in vds])
-    df["videos"] = videos_fix
+    if "sticker" not in df.columns:
+        df["sticker"] = dict()
 
-    audio_fix = df["audio_files"].dropna().apply(lambda auds: [{"uri": a["uri"], "creation_timestamp": a["creation_timestamp"] * 1000} for a in auds])
-    df["audio_files"] = audio_fix
+    if "share" not in df.columns:
+        df["share"] = dict()
 
-    write_deltalake("./store/rw_messages", df, schema=messages_bronze_schema, mode='overwrite')
+    if "gifs" not in df.columns:
+        df["gifs"] = [None] * len(df)
+
+    if "reactions" not in df.columns:
+        df["reactions"] = [None] * len(df)
+
+    if "photos" in df.columns:
+        photos_fix = df["photos"].dropna().apply(lambda phts: [{"uri": p["uri"], "creation_timestamp": p["creation_timestamp"] * 1000} for p in phts])
+        df["photos"] = photos_fix
+    else:
+        df["photos"] = None
+
+    if "videos" in df.columns:
+        videos_fix = df["videos"].dropna().apply(lambda vds: [{"uri": v["uri"], "creation_timestamp": v["creation_timestamp"] * 1000} for v in vds])
+        df["videos"] = videos_fix
+    else:
+        df["videos"] = [None] * len(df)
+
+    if "audio_files" in df.columns:
+        audio_fix = df["audio_files"].dropna().apply(lambda auds: [{"uri": a["uri"], "creation_timestamp": a["creation_timestamp"] * 1000} for a in auds])
+        df["audio_files"] = audio_fix
+    else:
+        df["audio_files"] = [None] * len(df)
+
+    if "call_duration" not in df.columns:
+        df["call_duration"] = None
+
+    write_deltalake("../store/rw_messages", df, schema=messages_bronze_schema, mode='append', overwrite_schema=True)
     print(len(df))
     return df
 
+
 if __name__ == "__main__":
+    # create_messenger_convs()
+    messenger_ids = DeltaTable("../store/messenger_conversations").to_pandas()["messenger_id"].tolist()
+    for m_id in messenger_ids:
+        create_bronze_messages_table(m_id)
     create_silver_messages_table()
-    # create_bronze_messages_table()
