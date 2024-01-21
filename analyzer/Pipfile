@@ -19,6 +19,7 @@ diagrams = "*"
 
 [dev-packages]
 ipykernel = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.10"
