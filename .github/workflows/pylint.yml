@@ -23,4 +23,13 @@ jobs:
     - name: Run pylint for analyzer
       run: |
         cd analyzer
-        pipenv run pylint --exit-zero --output-format=parseable potato_analyzer
+        pipenv run pylint --exit-zero --output-format=parseable app
+    - name: Install dependencies for Flask backend
+      run: |
+        cd webapp/backend
+        pipenv install --dev
+
+    - name: Run pylint for Flask backend
+      run: |
+        cd webapp/backend
+        pipenv run pylint --exit-zero --output-format=parseable app
