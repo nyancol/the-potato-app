@@ -1,9 +1,10 @@
-import pandas as pd
 from pathlib import Path
-import pyarrow as pa
-from deltalake import write_deltalake, DeltaTable
 import subprocess as sp
 import json
+
+import pandas as pd
+import pyarrow as pa
+from deltalake import write_deltalake, DeltaTable
 
 messenger_schema = pa.schema([
             ("id", pa.string()),
@@ -131,19 +132,25 @@ def create_bronze_messages_table(messenger_id):
         df["reactions"] = [None] * len(df)
 
     if "photos" in df.columns:
-        photos_fix = df["photos"].dropna().apply(lambda phts: [{"uri": p["uri"], "creation_timestamp": p["creation_timestamp"] * 1000} for p in phts])
+        photo_fix_lambda = lambda phts: [{"uri": p["uri"],
+                                          "creation_timestamp": p["creation_timestamp"] * 1000} for p in phts]
+        photos_fix = df["photos"].dropna().apply(photo_fix_lambda)
         df["photos"] = photos_fix
     else:
         df["photos"] = None
 
     if "videos" in df.columns:
-        videos_fix = df["videos"].dropna().apply(lambda vds: [{"uri": v["uri"], "creation_timestamp": v["creation_timestamp"] * 1000} for v in vds])
+        video_fix_lambda = lambda vds: [{"uri": v["uri"],
+                                         "creation_timestamp": v["creation_timestamp"] * 1000} for v in vds]
+        videos_fix = df["videos"].dropna().apply(video_fix_lambda)
         df["videos"] = videos_fix
     else:
         df["videos"] = [None] * len(df)
 
     if "audio_files" in df.columns:
-        audio_fix = df["audio_files"].dropna().apply(lambda auds: [{"uri": a["uri"], "creation_timestamp": a["creation_timestamp"] * 1000} for a in auds])
+        audio_fix_lambda = lambda auds: [{"uri": a["uri"],
+                                          "creation_timestamp": a["creation_timestamp"] * 1000} for a in auds]
+        audio_fix = df["audio_files"].dropna().apply(audio_fix_lambda)
         df["audio_files"] = audio_fix
     else:
         df["audio_files"] = [None] * len(df)

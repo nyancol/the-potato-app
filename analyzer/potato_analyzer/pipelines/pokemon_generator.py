@@ -1,12 +1,13 @@
-from openai import OpenAI
 import json
-from deltalake import DeltaTable, write_deltalake
-from datetime import date
-import requests
+from time import sleep
 from uuid import uuid4
+from datetime import date
+
+from openai import OpenAI
+from deltalake import DeltaTable, write_deltalake
+import requests
 import pandas as pd
 import pyarrow as pa
-from time import sleep
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,7 +17,8 @@ def generate_pokemon_description(env, first_name, communication_style, interests
                                  memorable_stories, plans_aspirations):
     client = OpenAI()
 
-    prompt = f"""Generate as a JSON object, a pokemon representing a friend named {first_name}, who has the following caracteristics:
+    prompt = f"""Generate as a JSON object, a pokemon representing a friend named {first_name}, who has the following
+    caracteristics:
     Personality: '{personality}'
     Communication style: '{communication_style}'
     Interests: '{interests}'
@@ -24,22 +26,24 @@ def generate_pokemon_description(env, first_name, communication_style, interests
     Memorable stories: '{memorable_stories}'
     Plans and aspirations: '{plans_aspirations}'.
 
-    If that person where to be a pokemon, what would be his/her "pokemon_name" and "pokemon_description"? 
+    If that person where to be a pokemon, what would be his/her "pokemon_name" and "pokemon_description"?
 
-    Additionnaly, generate three artistic image descriptions, representing what that person would look like as a pokemon, in a way it could be
-    interpreted by a text-to-image AI, for all three pokemon evolution levels, "L1_image_description", "L2_image_description",  "L3_image_description".
-    These levels are: starter (when the pokemon is small and cute), normal (when the pokemon is at it's normal form) and super ultra legendary
-    (when the pokemon is at its mightiest). Be only descriptive of the image without commenting on the meaning and repetitive in the description
-    for the different levels, they will be interpreted independently.
-    Return a json with five fields: "pokemon_name", "pokemon_description", "L1_image_description", "L2_image_description",  "L3_image_description".
-"""
+    Additionnaly, generate three artistic image descriptions, representing what that person would look like as a
+    pokemon, in a way it could be interpreted by a text-to-image AI, for all three pokemon evolution levels,
+    "L1_image_description", "L2_image_description",  "L3_image_description". These levels are: starter (when the
+    pokemon is small and cute), normal (when the pokemon is at it's normal form) and super ultra legendary
+    (when the pokemon is at its mightiest). Be only descriptive of the image without commenting on the meaning
+    and repetitive in the description for the different levels, they will be interpreted independently.
+    Return a json with five fields: "pokemon_name", "pokemon_description", "L1_image_description",
+    "L2_image_description",  "L3_image_description"."""
 
     model = "gpt-4-1106-preview" if env == "prod" else "gpt-3.5-turbo-1106"
     completion = client.chat.completions.create(
         model=model,
         response_format={ "type": "json_object" },
         messages=[
-                {"role": "system", "content": "You are a poetic assistant, skilled in describing people and their personalities as pokemons images based on a desciption, which outputs in JSON."},
+                {"role": "system", "content": """You are a poetic assistant, skilled in describing people and their
+        personalities as pokemons images based on a desciption, which outputs in JSON."""},
                 {"role": "user", "content": prompt}
             ]
         )
@@ -47,7 +51,9 @@ def generate_pokemon_description(env, first_name, communication_style, interests
 
 
 def generate_pokemon_image(env, first_name, last_name, evolution, image_description):
-    prompt = f"Create an image in the style of a pokemon card representing {image_description}. Do not write any text in the image."
+    prompt = f"""Create an image in the style of a pokemon card representing {image_description}.
+    Do not write any text in the image."""
+
     client = OpenAI()
     model = "dall-e-3" if env == "prod" else "dall-e-2"
     size = "1024x1024" if env == "prod" else "256x256"
@@ -69,18 +75,20 @@ def generate_pokemon_image(env, first_name, last_name, evolution, image_descript
 
 def generate_pokemon(env, first_name, last_name, communication_style, interests, personality, role_in_group,
                      memorable_stories, plans_aspirations):
-    pokemon_description, prompt = generate_pokemon_description(env, first_name, communication_style, interests, personality, role_in_group,
-                                                               memorable_stories, plans_aspirations)
+    pokemon_description, prompt = generate_pokemon_description(env, first_name, communication_style, interests,
+                                                               personality, role_in_group, memorable_stories,
+                                                               plans_aspirations)
     for i in range(1, 4):
-        pokemon_description[f"L{i}_image_path"] = generate_pokemon_image(env, first_name, last_name, i, pokemon_description[f"L{i}_image_description"])
+        pokemon_description[f"L{i}_image_path"] = generate_pokemon_image(env, first_name, last_name, i,
+                                                                         pokemon_description[f"L{i}_image_description"])
     return {**pokemon_description, **{"prompt": prompt, "text-to-image_ai": "OpenAI DALL-E 3"}}
 
 
 def load_potatoes(env, year_range):
     potato_description_path = "./store/potato_description_ai" if env == "prod" else "./store_test/potato_description_ai"
     df = DeltaTable(potato_description_path).to_pandas(columns=["first_name", "last_name", "communication_style",
-                                                                "interests", "personality", "role_in_group", "memorable_stories",
-                                                                "plans_aspirations", "year_range"])
+                                                                "interests", "personality", "role_in_group",
+                                                                "memorable_stories", "plans_aspirations", "year_range"])
     df = df[df.year_range.apply(lambda yr: yr[0] == year_range[0])]
     return df.to_dict(orient="records")
 
@@ -113,8 +121,9 @@ if __name__ == "__main__":
     pokemons = []
     for potato in load_potatoes(env, year_range):
         # sleep(60)
-        pokemon = generate_pokemon(env, potato["first_name"], potato["last_name"], potato["communication_style"], potato["interests"],
-                                   potato["personality"], potato["role_in_group"], potato["memorable_stories"], potato["plans_aspirations"])
+        pokemon = generate_pokemon(env, potato["first_name"], potato["last_name"], potato["communication_style"],
+                                   potato["interests"], potato["personality"], potato["role_in_group"],
+                                   potato["memorable_stories"], potato["plans_aspirations"])
         pokemons.append({**pokemon, **{"year_range": year_range, "first_name": potato["first_name"],
                                         "last_name": potato["last_name"]}})
         break

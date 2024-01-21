@@ -1,8 +1,6 @@
 import pandas as pd
 import pyarrow as pa
-from deltalake import write_deltalake, DeltaTable
-import subprocess as sp
-import json
+from deltalake import write_deltalake
 
 potato_location_schema = pa.schema([
             ("first_name", pa.string()),

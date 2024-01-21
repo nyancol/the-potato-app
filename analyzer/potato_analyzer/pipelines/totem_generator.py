@@ -1,13 +1,14 @@
+import json
+from time import sleep
+from datetime import date
+from uuid import uuid4
+
 import pandas as pd
 from deltalake import DeltaTable, write_deltalake
 from openai import OpenAI
-import json
-from uuid import uuid4
 import requests
 import pyarrow as pa
-from datetime import date
 from dotenv import load_dotenv
-from time import sleep
 
 
 load_dotenv()
@@ -37,8 +38,10 @@ def generate_totem_image(env, image_description, first_name, last_name):
 
 def generate_totem(env, first_name, description, historical_personality):
     client = OpenAI()
-    
-    prompt = f"Generate the spirit animal of a friend named {first_name}, who is {description} and has the following personality through the years:"
+
+    prompt = f"""Generate the spirit animal of a friend named {first_name}, who is
+    {description} and has the following personality through the years:"""
+
     for personality in historical_personality:
         year_prompt = f"""Year {personality["year_range"][0]};
     Personality: '{personality["personality"]}'
@@ -58,7 +61,8 @@ def generate_totem(env, first_name, description, historical_personality):
         model=model,
         response_format={ "type": "json_object" },
         messages=[
-        {"role": "system", "content": "You are a skilled assistant in describing people and their personalities from their text messages, which outputs in JSON."},
+        {"role": "system", "content": """You are a skilled assistant in describing people and their
+    personalities from their text messages, which outputs in JSON."""},
         {"role": "user", "content": prompt}
         ]
     )
@@ -67,9 +71,10 @@ def generate_totem(env, first_name, description, historical_personality):
 
 def generate_totem_description(env, first_name, last_name, description, spirit_animal, personality):
     client = OpenAI()
-    
-    prompt = f"""I have a friend named {first_name}, who is {description}, whose spirit animal is {spirit_animal["animal"]} because
-    {spirit_animal["description"]}. In the year {personality["year_range"][0]}, {first_name}'s personality can be described as:
+
+    prompt = f"""I have a friend named {first_name}, who is {description}, whose spirit animal is
+    {spirit_animal["animal"]} because {spirit_animal["description"]}. In the year
+    {personality["year_range"][0]}, {first_name}'s personality can be described as:
     Personality: '{personality["personality"]}'
     Communication style: '{personality["communication_style"]}'
     Interests: '{personality["interests"]}'
@@ -77,18 +82,19 @@ def generate_totem_description(env, first_name, last_name, description, spirit_a
     Memorable stories: '{personality["memorable_stories"]}'
     Plans and aspirations: '{personality["plans_aspirations"]}'.
 
-    Describe an artistic, alegorical and detailed image representing the spirit animal ({spirit_animal["animal"]}) with allegoric personality traits
-    of {first_name}. Be only descriptive of the image without commenting on
+    Describe an artistic, alegorical and detailed image representing the spirit animal ({spirit_animal["animal"]})
+    with allegoric personality traits of {first_name}. Be only descriptive of the image without commenting on
     the meaning, in a way it could be interpreted by a text-to-image AI, this image cannot contain written text.
-    You must return two sentences ('description' type: string and 'interpretation' type: string)  as a JSON structure, one for the image figurative
-    'description' and for the image 'interpretation'."""
+    You must return two sentences ('description' type: string and 'interpretation' type: string)  as a JSON structure,
+    one for the image figurative 'description' and for the image 'interpretation'."""
 
     model = "gpt-4-1106-preview" if env == "prod" else "gpt-3.5-turbo-1106"
     completion = client.chat.completions.create(
         model=model,
         response_format={ "type": "json_object" },
         messages=[
-        {"role": "system", "content": "You are a poetic assistant, skilled in describing people and their personalities from their text messages, which outputs in JSON."},
+        {"role": "system", "content": """You are a poetic assistant, skilled in describing people and their
+        personalities from their text messages, which outputs in JSON."""},
         {"role": "user", "content": prompt}
         ]
     )
@@ -108,8 +114,8 @@ def generate_totem_description(env, first_name, last_name, description, spirit_a
 def load_potatoes_personality(env, first_name, last_name):
     potato_description_path = "./store/potato_description_ai" if env == "prod" else "./store_test/potato_description_ai"
     df = DeltaTable(potato_description_path).to_pandas(columns=["first_name", "last_name", "communication_style",
-                                                                "interests", "personality", "role_in_group", "memorable_stories",
-                                                                "plans_aspirations", "year_range"])
+                                                                "interests", "personality", "role_in_group",
+                                                                "memorable_stories", "plans_aspirations", "year_range"])
     df = df[(df.first_name == first_name) & (df.last_name == last_name)]
     return df.to_dict(orient="records")
 
@@ -119,7 +125,8 @@ def load_potatoes():
     df["yo"] = df["birth_date"].apply(lambda bd: int((date.today() - bd).days / 365))
     df["gender"] = df["gender"].apply(lambda g: "man" if g == "male" else "woman")
     df = df[df.first_name == "Julie"]
-    df["description"] = df.apply(lambda row: f'{row["yo"]} years old young {", ".join(row["nationalities"])} {row["gender"]}', axis=1)
+    description_lambda = lambda row: f'{row["yo"]} years old young {", ".join(row["nationalities"])} {row["gender"]}'
+    df["description"] = df.apply(description_lambda, axis=1)
     potato_cards = [{"first_name": row["first_name"], "last_name": row["last_name"], "description": row["description"]}
                     for row in df.to_dict(orient="records")]
     return potato_cards
@@ -165,8 +172,10 @@ if __name__ == "__main__":
         print(totem)
         totems.append({**totem, **{"first_name": potato["first_name"], "last_name": potato["last_name"]}})
         for personality in personality_history:
-            totem_description = generate_totem_description(env, potato["first_name"], potato["last_name"], potato["description"], totem, personality)
-            totems_yearly.append({**totem_description, **{"first_name": potato["first_name"], "last_name": potato["last_name"],
+            totem_description = generate_totem_description(env, potato["first_name"], potato["last_name"],
+                                                           potato["description"], totem, personality)
+            totems_yearly.append({**totem_description, **{"first_name": potato["first_name"],
+                                                          "last_name": potato["last_name"],
                                                           "year_range": personality["year_range"]}})
     write_totems(env, totems)
     write_totem_details(env, totems_yearly)
