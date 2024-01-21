@@ -1,7 +1,7 @@
+from pathlib import Path
+from deltalake import DeltaTable
 from app import db, app, migrate
 from app.models import Patate, PatateLocation, SpiritAnimal, Pokemon
-from deltalake import DeltaTable
-from pathlib import Path
 
 # if len(sys.argv) >= 1 and sys.argv[1] == "prod":
 base_path = Path("/Users/i501383/Documents/the-potato-app/store")
@@ -11,7 +11,7 @@ base_path = Path("/Users/i501383/Documents/the-potato-app/store")
 def init_patates(db):
     df_patates = DeltaTable(base_path / "potatoes_card").to_pandas()
     df_patate_locations = DeltaTable(base_path / "potato_locations").to_pandas()
-    df_spirit_animal = DeltaTable(base_path / "totem_ai").to_pandas()
+    df_spirit_animal = DeltaTable(base_path / "totem").to_pandas()
     df_pokemon = DeltaTable(base_path / "pokemon_ai").to_pandas()
 
     new_patate = lambda row: Patate(first_name=row["first_name"],

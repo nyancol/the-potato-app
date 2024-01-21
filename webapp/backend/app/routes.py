@@ -8,10 +8,8 @@ from deltalake import DeltaTable
 from flask import jsonify, send_from_directory, request, render_template
 from flask_cors import CORS
 from flask_graphql import GraphQLView
-import graphene
 
 from app import app
-from app.models import Patate
 from app.schema_graphql import schema
 
 

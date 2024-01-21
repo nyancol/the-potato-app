@@ -1,4 +1,4 @@
-from graphene import Schema, ObjectType, List, Field, Int, String
+from graphene import Schema, ObjectType, List, Field, Int
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from app.models import Patate, PatateLocation, SpiritAnimal, Pokemon
 

@@ -1,9 +1,10 @@
 from typing import List
 
-from app import db
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped
 from graphene_sqlalchemy import SQLAlchemyObjectType
+
+from app import db
 
 
 class Patate(db.Model):
@@ -36,7 +37,7 @@ class Patate(db.Model):
         self.phone = phone
 
     def __repr__(self):
-        return '<id {}>'.format(self.id)
+        return f"<id {self.id}>"
 
 
 class PatateLocation(db.Model):
@@ -62,7 +63,7 @@ class PatateLocation(db.Model):
         self.post_code = post_code
 
     def __repr__(self):
-        return '<id {}>'.format(self.id)
+        return f"<id {self.id}>"
 
 
 class Pokemon(db.Model):
@@ -72,24 +73,24 @@ class Pokemon(db.Model):
     patate_id = mapped_column(ForeignKey("patates.id"))
     name = db.Column(db.String())
     description = db.Column(db.String())
-    L1_image_path = db.Column(db.String())
-    L2_image_path = db.Column(db.String())
-    L3_image_path = db.Column(db.String())
+    l1_image_path = db.Column(db.String())
+    l2_image_path = db.Column(db.String())
+    l3_image_path = db.Column(db.String())
 
-    def __init__(self, patate_id, name, L1_image_description,
-                 L2_image_description, L3_image_description,
-                 L1_image_path, L2_image_path, L3_image_path):
+    def __init__(self, patate_id, name, l1_image_description,
+                 l2_image_description, l3_image_description,
+                 l1_image_path, l2_image_path, l3_image_path):
         self.patate_id = patate_id
         self.name = name
-        self.L1_image_description = L1_image_description
-        self.L2_image_description = L2_image_description
-        self.L3_image_description = L3_image_description
-        self.L1_image_path = L1_image_path
-        self.L2_image_path = L2_image_path
-        self.L3_image_path = L3_image_path
+        self.l1_image_description = l1_image_description
+        self.l2_image_description = l2_image_description
+        self.l3_image_description = l3_image_description
+        self.l1_image_path = l1_image_path
+        self.l2_image_path = l2_image_path
+        self.l3_image_path = l3_image_path
 
     def __repr__(self):
-        return '<id {}>'.format(self.id)
+        return f"<id {self.id}>"
 
 
 class SpiritAnimal(db.Model):
@@ -108,4 +109,4 @@ class SpiritAnimal(db.Model):
         self.image_path = image_path
 
     def __repr__(self):
-        return '<id {}>'.format(self.id)
+        return f"<id {self.id}>"
