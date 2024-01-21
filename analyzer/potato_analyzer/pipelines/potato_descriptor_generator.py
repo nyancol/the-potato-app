@@ -63,8 +63,7 @@ Here below are the messages extracts:
         ]
     )
     description_response = json.loads(completion.choices[0].message.content)
-    return {"first_name": first_name,
-            "last_name": last_name,
+    return {
             "communication_style": description_response["communication_style"],
             "interests": description_response["interests"],
             "personality": description_response["personality"],
@@ -72,7 +71,6 @@ Here below are the messages extracts:
             "memorable_stories": description_response["memorable_stories"],
             "plans_aspirations": description_response["plans_aspirations"],
             "messages_size_inference": len(messages_list),
-            "year_range": year_range,
             "conversation_sources": conversations,
             "prompt": prompt,
             }
@@ -108,13 +106,16 @@ def write_potato_descriptions(env, potato_descriptions):
     for field in ["communication_style", "interests", "personality", "memorable_stories", "plans_aspirations", ]:
         df_description_ai[field] = df_description_ai[field].apply(lambda cs: {str(k): str(v) for k, v in cs.items()})
     description_table_path = "./store/potato_description_ai" if env == "prod" else "./store_test/potato_description_ai"
-    write_deltalake(description_table_path, df_description_ai, schema=potato_description_schema, mode='overwrite')
+    write_deltalake(description_table_path, df_description_ai, schema=potato_description_schema, mode='append')
 
 
 if __name__ == "__main__":
-    year_range = [2023]
-    totems = []
+    year_range = [2019, 2021, 2023]
+    personalities = []
     env = "prod"
     for card in load_potatoes():
-        totems.append(generate_potato_description(env, card["first_name"], card["last_name"], card["description"], year_range))
-    write_potato_descriptions(env, totems)
+        for year in year_range:
+            personality = generate_potato_description(env, card["first_name"], card["last_name"], card["description"], [year])
+            personalities.append({**personality, **{"first_name": card["first_name"], "last_name": card["last_name"],
+                                                   "year_range": [year]}})
+    write_potato_descriptions(env, personalities)

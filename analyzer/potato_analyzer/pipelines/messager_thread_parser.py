@@ -157,7 +157,7 @@ def create_bronze_messages_table(messenger_id):
 
 
 if __name__ == "__main__":
-    # create_messenger_convs()
+    create_messenger_convs()
     messenger_ids = DeltaTable("../store/messenger_conversations").to_pandas()["messenger_id"].tolist()
     for m_id in messenger_ids:
         create_bronze_messages_table(m_id)
