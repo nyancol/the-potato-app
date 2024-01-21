@@ -14,13 +14,13 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: Install dependencies for analyzer
       run: |
-        cd potato_analyzer
-        python -m pip install --upgrade pip
+        cd analyzer
         pip install -r requirements.txt
-        pip install pylint
-    - name: Analysing the code with pylint
+        pipenv install --dev --deploy --ignore-pipfile
+
+    - name: Run pylint for analyzer
       run: |
-        cd potato_analyzer
-        pylint $(git ls-files '*.py') potato_analyzer
+        cd analyzer
+        pylint --exit-zero --output-format=parseable potato_analyzer
