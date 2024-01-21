@@ -17,10 +17,10 @@ jobs:
     - name: Install dependencies for analyzer
       run: |
         cd analyzer
-        pip install -r requirements.txt
-        pipenv install --dev --deploy --ignore-pipfile
+        pip install pipenv
+        pipenv install --dev
 
     - name: Run pylint for analyzer
       run: |
         cd analyzer
-        pylint --exit-zero --output-format=parseable potato_analyzer
+        pipenv run pylint --exit-zero --output-format=parseable potato_analyzer
