@@ -8,6 +8,7 @@ webapp/backend/migrations/
 node_modules
 /dist
 
+webapp/.next/
 
 # local env files
 .env
