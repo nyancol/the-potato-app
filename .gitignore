@@ -3,6 +3,7 @@ store
 store_test
 
 webapp/backend/migrations/
+webapp/.vercel
 
 .DS_Store
 node_modules
